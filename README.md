@@ -7,10 +7,10 @@ An example of the JSON (web format) model output from Teachable Machine. You can
 An example of using only vanilla JS to get images from the webcam and passing to ml5.js with the MobileNet model (most likely defaults to V2?) for classification.
 
 ## js-teachable.html
-A copy/paste of the sample code provided by Teachable Machine. Model files have been placed into the my_models directory, as per the sample code.
+A copy/paste of the sample code provided by Teachable Machine. Model files have been placed into the my_models directory, as per the sample code. (Also uses tf.js)
 
 ## js-ml5-teachable.html
-Using just vanilla JS to get images from the webcam and passing to ml5.js with a Teachable Machine model for classification. (Also uses tf.js)
+Using just vanilla JS to get images from the webcam and passing to ml5.js with a Teachable Machine model for classification. You can also load the model via public upload link, if you opted for it on Teachable Machine.
 
 ## js-tf-mobilenetv3.html
 A recreation of the Teachable Machine with just TensorFlowj.js (tf.js), to show how it may have been all put together (minus the KNN classifier for brevity). This uses vanilla JS to get the images from the webcam and feeds the images to either the training sets or the prediction sets. Training and predictions are done using tf.js with the MobileNetV3-Small model. (Note: predictions on Teachable Machine most likely uses a KNN classifier, so as an exercise, perhaps you can rewrite this to use MediaNet to generate the logits and KNN for the predictions!)
