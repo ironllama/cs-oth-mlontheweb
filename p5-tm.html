@@ -35,6 +35,8 @@
         let confidence = "";
         let icon = "";
         let classifier;
+
+        // Someone already classified a bunch of "art" -- so instead of retraining with a bunch of random images on TeachableMachine, we can use their model.
         let modelURL = 'https://teachablemachine.withgoogle.com/models/d_IK4IDKu/';
 
         let input;
