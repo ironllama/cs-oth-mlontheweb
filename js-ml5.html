@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+    </style>
+</head>
+
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <div id="classification">
+        <div id="result">None</div>
+        <div id="probability">--</div>
+    </div>
+    <script>
+        // Create a webcam capture
+        const video = document.getElementById("video");
+        navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+            video.srcObject = stream;
+            video.play();
+        });
+
+        // Initialize ml5 with MobileNet.
+        const classifier = ml5.imageClassifier("MobileNet", video, loop);
+
+        // Keep classifing whatever is in the video stream.
+        function loop() {
+            classifier.classify().then(results => {
+                // Display results on the page.
+                result.innerText = results[0].label;
+                probability.innerText = results[0].confidence.toFixed(4);
+                loop(classifier); // Recursive loop, throttled by the classifier.classify().
+            });
+        };
+
+    </script>
+
+</body>
+
+</html>
