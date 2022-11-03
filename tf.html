@@ -76,9 +76,14 @@
         // Enable the webcam.
         ENABLE_CAM_BUTTON.addEventListener('click', enableCam);
         let videoPlaying = false;
+
         function enableCam() {
             if (!!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
-                const constraints = { video: true, width: CAM_INPUT_WIDTH, height: CAM_INPUT_HEIGHT };
+                const constraints = {
+                    video: true,
+                    width: CAM_INPUT_WIDTH,
+                    height: CAM_INPUT_HEIGHT
+                };
 
                 // Activate the webcam stream.
                 navigator.mediaDevices.getUserMedia(constraints).then(function (stream) {
@@ -103,7 +108,7 @@
             // mobilenet = await tf.loadGraphModel(URL, { fromTFHub: true });
 
             // Probably faster if you just download the model...
-            const URL = './my_model/tfjs-model_imagenet_mobilenet_v3_small_100_224_feature_vector_5.json';
+            const URL = './tf_model/tfjs-model_imagenet_mobilenet_v3_small_100_224_feature_vector_5.json';
             mobilenet = await tf.loadGraphModel(URL);
 
             STATUS.innerText = 'MobileNet v3 loaded successfully!';
@@ -115,15 +120,23 @@
             });
             prepareLayers();
         }
-        loadMobileNetFeatureModel();  // Call the function immediately to start loading async.
+        loadMobileNetFeatureModel(); // Call the function immediately to start loading async.
 
         // Get the rest of the model ready.
         let model = tf.sequential();
-        function prepareLayers() {
-            model.add(tf.layers.dense({ inputShape: [1024], units: 128, activation: 'relu' }));
-            model.add(tf.layers.dense({ units: CLASS_NAMES.length, activation: 'softmax' }));
 
-            model.summary();  // For display/debugging.
+        function prepareLayers() {
+            model.add(tf.layers.dense({
+                inputShape: [1024],
+                units: 128,
+                activation: 'relu'
+            }));
+            model.add(tf.layers.dense({
+                units: CLASS_NAMES.length,
+                activation: 'softmax'
+            }));
+
+            model.summary(); // For display/debugging.
 
             // Compile the model with the defined optimizer and specify a loss function to use.
             model.compile({
@@ -139,19 +152,19 @@
         let dataCollectorButtons = document.querySelectorAll('button.dataCollector');
         for (let i = 0; i < dataCollectorButtons.length; i++) {
             dataCollectorButtons[i].addEventListener('mousedown', gatherDataForClass);
-            dataCollectorButtons[i].addEventListener('mouseup', gatherDataForClass);  // TODO: Why both?
+            dataCollectorButtons[i].addEventListener('mouseup', gatherDataForClass); // TODO: Why both?
             dataCollectorButtons[i].addEventListener('touchend', gatherDataForClass); // For Mobile.
 
-            CLASS_NAMES.push(dataCollectorButtons[i].getAttribute('data-name'));  // Populate the human readable names for classes.
+            CLASS_NAMES.push(dataCollectorButtons[i].getAttribute('data-name')); // Populate the human readable names for classes.
         }
 
         let gatherDataState = STOP_DATA_GATHER;
-        let allTrainingDataImages = [];  // For showing gathered examples.
+        let allTrainingDataImages = []; // For showing gathered examples.
         function gatherDataForClass() {
             let classNumber = parseInt(this.getAttribute('data-1hot'));
             gatherDataState = (gatherDataState === STOP_DATA_GATHER) ? classNumber : STOP_DATA_GATHER;
 
-            allTrainingDataImages[gatherDataState] = [];  // Reset the temporary collection of images.
+            allTrainingDataImages[gatherDataState] = []; // Reset the temporary collection of images.
             dataGatherLoop();
         }
 
@@ -159,18 +172,19 @@
         let trainingDataInputs = [];
         let trainingDataOutputs = [];
         let examplesCount = [];
+
         function dataGatherLoop() {
-            if (videoPlaying && gatherDataState !== STOP_DATA_GATHER) {  // Only gather data if webcam is on and a relevent button is pressed.
+            if (videoPlaying && gatherDataState !== STOP_DATA_GATHER) { // Only gather data if webcam is on and a relevent button is pressed.
 
-                let imageFeatures = calculateFeaturesOnCurrentFrame();  // Ensure tensors are cleaned up.
+                let imageFeatures = calculateFeaturesOnCurrentFrame(); // Ensure tensors are cleaned up.
 
-                allTrainingDataImages[gatherDataState].push(imageFeatures[1]);  // Add to the collection of images gathered.
+                allTrainingDataImages[gatherDataState].push(imageFeatures[1]); // Add to the collection of images gathered.
 
                 trainingDataInputs.push(imageFeatures[0]);
                 trainingDataOutputs.push(gatherDataState);
 
-                if (examplesCount[gatherDataState] === undefined) examplesCount[gatherDataState] = 0;  // Intialize array index element if currently undefined.
-                examplesCount[gatherDataState]++;  // Increment counts of examples for user interface to show.
+                if (examplesCount[gatherDataState] === undefined) examplesCount[gatherDataState] = 0; // Intialize array index element if currently undefined.
+                examplesCount[gatherDataState]++; // Increment counts of examples for user interface to show.
 
                 STATUS.innerText = '';
                 for (let n = 0; n < CLASS_NAMES.length; n++) {
@@ -183,7 +197,7 @@
 
         function calculateFeaturesOnCurrentFrame() {
             return tf.tidy(function () {
-                let videoFrameAsTensor = tf.browser.fromPixels(VIDEO);  // Grab pixels from current VIDEO frame.
+                let videoFrameAsTensor = tf.browser.fromPixels(VIDEO); // Grab pixels from current VIDEO frame.
 
                 // Resize video frame tensor to be 224 x 224 pixels which is needed by MobileNet for input.
                 let resizedTensorFrame = tf.image.resizeBilinear(
@@ -195,7 +209,7 @@
                 // const cropbox = [[0, left_margin, 1, 1 - left_margin]];
                 // let resizedTensorFrame = tf.image.cropAndResize(videoFrameAsTensor, cropBox, [0], [MOBILE_NET_INPUT_HEIGHT, MOBILE_NET_INPUT_WIDTH]);
 
-                let normalizedTensorFrame = resizedTensorFrame.div(255);  // MobileNets expect inputs between 0..1, image data is 0..255
+                let normalizedTensorFrame = resizedTensorFrame.div(255); // MobileNets expect inputs between 0..1, image data is 0..255
 
                 return [mobilenet.predict(normalizedTensorFrame.expandDims()).squeeze(), normalizedTensorFrame];
             });
@@ -218,10 +232,15 @@
                 shuffle: true,
                 batchSize: 5,
                 epochs: 10,
-                callbacks: { onEpochEnd: logProgress }
+                callbacks: {
+                    onEpochEnd: logProgress
+                }
             });
 
-            tfvis.show.history(tfvis.visor().surface({ tab: 'Data', name: 'History' }), results, ['loss', 'acc']);
+            tfvis.show.history(tfvis.visor().surface({
+                tab: 'Data',
+                name: 'History'
+            }), results, ['loss', 'acc']);
 
             outputsAsTensor.dispose();
             oneHotOutputs.dispose();
@@ -255,6 +274,7 @@
         // ====================================================================
         // Purge data and start over. Note this does not dispose of the loaded MobileNet model and MLP head tensors as you will need to reuse them to train a new model.
         RESET_BUTTON.addEventListener('click', reset);
+
         function reset() {
             predict = false;
             examplesCount.splice(0);
